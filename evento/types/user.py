@@ -3,7 +3,6 @@ from enum import Enum
 
 from pydantic import BaseModel, validator
 
-from evento.models import User
 from evento.tools import hash_password
 
 
@@ -55,5 +54,5 @@ class UserOutSchema(BaseModel):
     role: Role
 
     @staticmethod
-    def from_orm(user: User):
+    def from_orm(user):
         return UserOutSchema(**user)

@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from settings import settings
+
 from . import routes
+from .settings import settings
 
 app = FastAPI(**settings.FASTAPI_KWARGS)
 
