@@ -13,6 +13,12 @@ class Role(str, Enum):
     ORGANIZER = "ORGANIZER"
 
 
+class AddFriendSchema(BaseModel):
+    """DTO for add friend"""
+
+    friend_phone_number: PhoneNumber
+
+
 class UserOutSchema(BaseModel):
     """DTO for user response"""
 
