@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel
 
 from .constraints import Password, PhoneNumber, Username
 from .user import Role

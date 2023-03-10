@@ -25,8 +25,9 @@ from evento.types import (
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     """Dependecy to get user from auth token"""
+    payload = {}
 
     try:
         payload = jwt.decode(
@@ -37,13 +38,14 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     except Exception as e:
         print(e)
         raise HTTPException(401, "Unauthorized")
+    
 
     with session_scope() as db:
-        user = db.query(User).filter(User.id == 1).one_or_none()
+        user = db.query(User).filter(User.id == payload.get('sub', -1)).one_or_none()
         if user is None:
             raise UserNotFoundException()
-
-        return user
+        
+        return cast(int, user.id)
 
 
 def register_user(payload: RegisterUserSchema) -> UserOutSchema:
@@ -89,7 +91,7 @@ def login_user(payload: LoginUserSchema) -> TokenSchema:
 
         expire = datetime.utcnow() + timedelta(minutes=1000000)
         access_token = jwt.encode(
-            {"sub": user.id, "exp": expire},
+            {"sub": str(user.id), "exp": expire},
             key=settings.JWT_SECRET_KEY,
             algorithm=settings.JWT_ALGORITHM,
         )

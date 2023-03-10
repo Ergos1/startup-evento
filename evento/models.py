@@ -31,6 +31,14 @@ users_to_friends_table = Table(
 )
 
 
+events_to_events_categories_table = Table(
+    "events_to_event_categories",
+    Base.metadata,
+    Column("event_id", Integer, ForeignKey("events.id")),
+    Column("event_category_id", Integer, ForeignKey("event_categories.id")),
+)
+
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
@@ -79,8 +87,11 @@ class EventImage(Base):
     __tablename__ = "event_images"
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
 
-    # optional
+    # require
     url = Column(String, nullable=False)
+
+    # relations
+    event_id = Column(Integer, ForeignKey("events.id"))
 
 
 class EventSchedule(Base):
@@ -88,7 +99,7 @@ class EventSchedule(Base):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
 
     # optional
-    start_date = Column(TIMESTAMP(timezone=True), nullable=False)  #
+    start_date = Column(TIMESTAMP(timezone=True), nullable=False)
     end_date = Column(TIMESTAMP(timezone=True), nullable=False)
     description = Column(String, nullable=False)
 
@@ -106,12 +117,26 @@ class EventComment(Base):
     event_id = Column(Integer, ForeignKey("events.id"))
 
 
+class EventCategory(Base):
+    __tablename__ = "event_categories"
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+
+    # require
+    name = Column(String, nullable=False)
+
+    # relations
+    events = relationship(
+        "Event",
+        secondary=events_to_events_categories_table,
+        back_populates="categories",
+    )
+
+
 class Event(Base):
     __tablename__ = "events"
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
 
     # require
-    categories = Column(ARRAY(Enum(Category)), nullable=False, default=[])
     start_date = Column(TIMESTAMP(timezone=True), nullable=False)
     end_date = Column(TIMESTAMP(timezone=True), nullable=False)
     address = Column(String, nullable=False)
@@ -129,3 +154,7 @@ class Event(Base):
     )
     schedules = relationship("EventSchedule")
     comments = relationship("EventComment")
+    images = relationship("EventImage")
+    categories = relationship(
+        "EventCategory", secondary=events_to_events_categories_table, back_populates="events"
+    )
