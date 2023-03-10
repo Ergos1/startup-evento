@@ -61,9 +61,11 @@ def register_user(payload: RegisterUserSchema) -> UserOutSchema:
         if user is not None:
             raise HTTPException(422, "User phone number or username is not unique")
 
-        new_user = User(**payload, hash_password=hash_password(payload.password))
+        new_user = User(
+            **payload.dict(exclude={"password": True}),
+            password=hash_password(payload.password),
+        )
         db.add(new_user)
-        db.commit()
 
         return UserOutSchema.from_orm(new_user)
 
@@ -82,7 +84,7 @@ def login_user(payload: LoginUserSchema) -> TokenSchema:
         if not user.verified:
             raise HTTPException(400, "User is not verified")
 
-        if not verify_password(payload.password, cast(str, user.hash_password)):
+        if not verify_password(payload.password, cast(str, user.password)):
             raise HTTPException(400, "Incorrect password")
 
         expire = datetime.utcnow() + timedelta(minutes=1000000)
@@ -112,6 +114,7 @@ def send_otp(payload: SendOTPSchema) -> None:
             raise HTTPException(400, "User already verified")
 
         otp_code = generate_otp(6)
+        user.otp_code = otp_code  # type: ignore
 
         phone_number = cast(str, user.phone_number).replace("+", "")
         response = get(
@@ -120,8 +123,11 @@ def send_otp(payload: SendOTPSchema) -> None:
                 "recipient": phone_number,
                 "text": f"Код верификации: {otp_code} \nНИКОМУ НЕ ГОВОРИТЕ КОД!",
                 "apiKey": settings.OTP_API_KEY,
+                # "from": "EventoKz",
             },
         )
+
+        print(response.json())
 
         if response.json().get("code", 1) != 0:
             raise HTTPException(500, "OTP provider is unaviable")

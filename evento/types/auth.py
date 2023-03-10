@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, constr
 
-from .user import Password, PhoneNumber, Role, Username
+from .constraints import Password, PhoneNumber, Username
+from .user import Role
 
 
 class RegisterUserSchema(BaseModel):

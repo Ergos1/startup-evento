@@ -5,5 +5,6 @@ from .auth import (
     TokenSchema,
     VerifyOTPSchema,
 )
-from .user import Password, PhoneNumber, Role, UserOutSchema
+from .constraints import Password
 from .event import Category
+from .user import Role, UserOutSchema

@@ -1,10 +1,19 @@
-from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, Integer, String, text, ForeignKey, Table
+from sqlalchemy import (
+    TIMESTAMP,
+    Boolean,
+    Column,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    text,
+)
 from sqlalchemy.orm import relationship
-
 from sqlalchemy.types import ARRAY
-from .database import Base
-from .types import Role, Category
 
+from .database import Base
+from .types import Category, Role
 
 users_to_events_table = Table(
     "users_to_events",
@@ -27,7 +36,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
 
     # require
-    hash_password = Column(String, nullable=False)
+    password = Column(String, nullable=False)
     role = Column(Enum(Role), nullable=False)
     username = Column(String, nullable=False, unique=True, index=True)
     phone_number = Column(String, nullable=False, unique=True, index=True)
@@ -46,6 +55,22 @@ class User(Base):
     updated_at = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
+
+    # relations
+    participant_events = relationship(
+        "Event",
+        secondary=users_to_events_table,
+        back_populates="participants",
+    )
+    friends = relationship(
+        "User",
+        secondary=users_to_friends_table,
+        primaryjoin=id == users_to_friends_table.c.user_id,
+        secondaryjoin=id == users_to_friends_table.c.friend_id,
+        backref="friends_backref",
+    )
+    created_events = relationship("Event", back_populates="creator")
+    comments = relationship("EventComment", back_populates="from_user")
 
 
 # upload_image -> backend -> id; id_image ->
@@ -92,7 +117,7 @@ class Event(Base):
     address = Column(String, nullable=False)
     description = Column(String, nullable=False)
 
-    # optional 
+    # optional
     link_to_registration = Column(String, nullable=True)
     link_to_buy_ticket = Column(String, nullable=True)
 
