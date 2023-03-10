@@ -1,2 +1,3 @@
-from .auth import login_user, register_user, send_otp, verify_otp, get_current_user_id
-from .event import create_event, get_event_list, get_event
+from .auth import get_current_user_id, login_user, register_user, send_otp, verify_otp
+from .event import create_event, get_event, get_event_list
+from .user import add_friend
