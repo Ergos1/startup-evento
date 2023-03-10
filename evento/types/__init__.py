@@ -6,3 +6,4 @@ from .auth import (
     VerifyOTPSchema,
 )
 from .user import Password, PhoneNumber, Role, UserOutSchema
+from .event import Category
