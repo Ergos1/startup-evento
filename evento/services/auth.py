@@ -8,7 +8,7 @@ from requests import get
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from evento.database import get_db
+from evento.database import session_scope
 from evento.execeptions import UserNotFoundException
 from evento.models import User
 from evento.settings import settings
@@ -25,9 +25,7 @@ from evento.types import (
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
-) -> User:
+def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     """Dependecy to get user from auth token"""
 
     try:
@@ -40,106 +38,117 @@ def get_current_user(
         print(e)
         raise HTTPException(401, "Unauthorized")
 
-    user = db.query(User).filter(User.id == 1).one_or_none()
-    if user is None:
-        raise UserNotFoundException()
+    with session_scope() as db:
+        user = db.query(User).filter(User.id == 1).one_or_none()
+        if user is None:
+            raise UserNotFoundException()
 
-    return user
+        return user
 
 
-def register_user(payload: RegisterUserSchema, db: Session) -> UserOutSchema:
-    user = (
-        db.query(User)
-        .filter(
-            or_(
-                User.phone_number == payload.phone_number,
-                User.username == payload.username,
+def register_user(payload: RegisterUserSchema) -> UserOutSchema:
+    with session_scope() as db:
+        user = (
+            db.query(User)
+            .filter(
+                or_(
+                    User.phone_number == payload.phone_number,
+                    User.username == payload.username,
+                )
             )
+            .one_or_none()
         )
-        .one_or_none()
-    )
-    if user is not None:
-        raise HTTPException(422, "User phone number or username is not unique")
+        if user is not None:
+            raise HTTPException(422, "User phone number or username is not unique")
 
-    new_user = User(**payload, hash_password=hash_password(payload.password))
-    db.add(new_user)
-    db.commit()
+        new_user = User(**payload, hash_password=hash_password(payload.password))
+        db.add(new_user)
+        db.commit()
 
-    return UserOutSchema.from_orm(new_user)
+        return UserOutSchema.from_orm(new_user)
 
 
-def login_user(payload: LoginUserSchema, db: Session) -> TokenSchema:
-    user = (
-        db.query(User).filter(User.phone_number == payload.phone_number).one_or_none()
-    )
+def login_user(payload: LoginUserSchema) -> TokenSchema:
+    with session_scope() as db:
+        user = (
+            db.query(User)
+            .filter(User.phone_number == payload.phone_number)
+            .one_or_none()
+        )
 
-    if not user:
-        raise UserNotFoundException()
+        if not user:
+            raise UserNotFoundException()
 
-    if not user.verified:
-        raise HTTPException(400, "User is not verified")
+        if not user.verified:
+            raise HTTPException(400, "User is not verified")
 
-    if not verify_password(payload.password, cast(str, user.hash_password)):
-        raise HTTPException(400, "Incorrect password")
+        if not verify_password(payload.password, cast(str, user.hash_password)):
+            raise HTTPException(400, "Incorrect password")
 
-    expire = datetime.utcnow() + timedelta(minutes=1000000)
-    access_token = jwt.encode(
-        {"sub": user.id, "exp": expire},
-        key=settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM,
-    )
+        expire = datetime.utcnow() + timedelta(minutes=1000000)
+        access_token = jwt.encode(
+            {"sub": user.id, "exp": expire},
+            key=settings.JWT_SECRET_KEY,
+            algorithm=settings.JWT_ALGORITHM,
+        )
 
-    return TokenSchema(token=access_token)
+        return TokenSchema(token=access_token)
 
 
-def send_otp(payload: SendOTPSchema, db: Session) -> None:
+def send_otp(payload: SendOTPSchema) -> None:
     """Sends OTP to phone number otherwise raise ```Exception```"""
 
-    user = (
-        db.query(User).filter(User.phone_number == payload.phone_number).one_or_none()
-    )
+    with session_scope() as db:
+        user = (
+            db.query(User)
+            .filter(User.phone_number == payload.phone_number)
+            .one_or_none()
+        )
 
-    if not user:
-        raise UserNotFoundException()
+        if not user:
+            raise UserNotFoundException()
 
-    if user.verified:
-        raise HTTPException(400, "User already verified")
+        if user.verified:
+            raise HTTPException(400, "User already verified")
 
-    otp_code = generate_otp(6)
+        otp_code = generate_otp(6)
 
-    phone_number = cast(str, user.phone_number).replace("+", "")
-    response = get(
-        settings.OTP_API_URL,
-        params={
-            "recipient": phone_number,
-            "text": f"Код верификации: {otp_code} \nНИКОМУ НЕ ГОВОРИТЕ КОД!",
-            "apiKey": settings.OTP_API_KEY,
-        },
-    )
+        phone_number = cast(str, user.phone_number).replace("+", "")
+        response = get(
+            settings.OTP_API_URL,
+            params={
+                "recipient": phone_number,
+                "text": f"Код верификации: {otp_code} \nНИКОМУ НЕ ГОВОРИТЕ КОД!",
+                "apiKey": settings.OTP_API_KEY,
+            },
+        )
 
-    if response.json().get("code", 1) != 0:
-        raise HTTPException(500, "OTP provider is unaviable")
+        if response.json().get("code", 1) != 0:
+            raise HTTPException(500, "OTP provider is unaviable")
 
-    return None
+        return None
 
 
-def verify_otp(payload: VerifyOTPSchema, db: Session) -> None:
+def verify_otp(payload: VerifyOTPSchema) -> None:
     """Verifies OTP otherwise raise ```Exception```"""
 
-    user = (
-        db.query(User).filter(User.phone_number == payload.phone_number).one_or_none()
-    )
+    with session_scope() as db:
+        user = (
+            db.query(User)
+            .filter(User.phone_number == payload.phone_number)
+            .one_or_none()
+        )
 
-    if not user:
-        raise UserNotFoundException()
+        if not user:
+            raise UserNotFoundException()
 
-    if user.verified:
-        raise HTTPException(400, "User already verified")
+        if user.verified:
+            raise HTTPException(400, "User already verified")
 
-    if user.otp_code != payload.otp_code:
-        raise HTTPException(400, "OTP is incorrect")
+        if user.otp_code != payload.otp_code:
+            raise HTTPException(400, "OTP is incorrect")
 
-    user.verified = True  # type: ignore
-    db.commit()
+        user.verified = True  # type: ignore
+        db.commit()
 
-    return None
+        return None
