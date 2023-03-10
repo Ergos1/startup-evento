@@ -18,13 +18,16 @@ class Category(str, Enum):
     TOUR = "TOUR"
     TRIP = "TRIP"
 
+
 class EventScheduleInSchema(BaseModel):
     start_date: date
     end_date: date
     description: str
 
+
 class EveneCategoryInSchema(BaseModel):
     id: int
+
 
 class CreateEventSchema(BaseModel):
     """DTO for event creation"""
@@ -40,12 +43,14 @@ class CreateEventSchema(BaseModel):
 
     schedules: list[EventScheduleInSchema]
 
+
 class EventCategoryOutSchema(BaseModel):
     id: int
     name: str
 
     class Config:
         orm_mode = True
+
 
 class EventScheduleOutSchema(BaseModel):
     id: int
@@ -73,3 +78,9 @@ class GetEventOutSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class SubscribeSchema(BaseModel):
+    """DTO to subscribe user to event"""
+
+    event_id: int

@@ -3,11 +3,16 @@ from fastapi import HTTPException
 from evento.database import session_scope
 from evento.models import (
     Event,
-    EventCategory,
     EventSchedule,
     events_to_events_categories_table,
+    users_to_events_table,
 )
-from evento.types import BasePaginationFilter, CreateEventSchema, GetEventOutSchema
+from evento.types import (
+    BasePaginationFilter, 
+    CreateEventSchema, 
+    GetEventOutSchema, 
+    SubscribeSchema,
+)
 
 
 def create_event(payload: CreateEventSchema, user_id: int):
@@ -23,11 +28,11 @@ def create_event(payload: CreateEventSchema, user_id: int):
         db.refresh(new_event)
 
         for category in payload.categories:
-            event_category = events_to_events_categories_table.insert().values(
+            new_event_to_category = events_to_events_categories_table.insert().values(
                 event_id=new_event.id,
                 event_category_id=category.id,
             )
-            db.execute(event_category)
+            db.execute(new_event_to_category)
 
         for schedule in payload.schedules:
             new_schedule = EventSchedule(
@@ -55,3 +60,19 @@ def get_event(event_id: int) -> GetEventOutSchema:
             raise HTTPException(400, "Event not found")
 
         return GetEventOutSchema.from_orm(event)
+
+
+def subscribe(payload: SubscribeSchema, user_id: int):
+    with session_scope() as db:
+        event = db.query(Event).filter(Event.id == payload.event_id).one_or_none()
+
+        if event is None:
+            raise HTTPException(400, "Event not found")
+    
+        new_user_to_event = users_to_events_table.insert().values(
+            user_id=user_id,
+            event_id=payload.event_id,
+        )
+        db.execute(new_user_to_event)
+
+        return

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from evento.services import get_current_user_id, create_event, get_event_list, get_event
-from evento.types import CreateEventSchema, BasePaginationFilter
+from evento.services import get_current_user_id, create_event, get_event_list, get_event, subscribe
+from evento.types import CreateEventSchema, BasePaginationFilter, SubscribeSchema
 router = APIRouter()
 
 
@@ -17,3 +17,7 @@ async def list(payload: BasePaginationFilter):
 @router.get("/{id}")
 async def one(id):
     return get_event(event_id=id)
+
+@router.post("/subscribe")
+async def subscribe_(payload: SubscribeSchema, user_id = Depends(get_current_user_id)):
+    return subscribe(payload=payload, user_id=user_id)
