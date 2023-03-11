@@ -1,22 +1,8 @@
 from datetime import date
 from enum import Enum
-from typing import Optional 
+from typing import Optional
 
 from pydantic import BaseModel
-
-class Category(str, Enum):
-    """Event categories"""
-
-    CINEMA = "CINEMA"
-    DEVELOPMENT = "DEVELOPMENT"
-    ENTARTAINMENT = "ENTARTAINMENT"
-    CONCERT = "CONCERT"
-    SPORT = "SPORT"
-    ART = "ART"
-    WORLD_EVENT = "WORLD_EVENT"
-    WORKSHOP = "WORKSHOP"
-    TOUR = "TOUR"
-    TRIP = "TRIP"
 
 
 class EventScheduleInSchema(BaseModel):
@@ -25,14 +11,10 @@ class EventScheduleInSchema(BaseModel):
     description: str
 
 
-class EveneCategoryInSchema(BaseModel):
-    id: int
-
-
 class CreateEventSchema(BaseModel):
     """DTO for event creation"""
 
-    categories: list[EveneCategoryInSchema]
+    category_ids: list[int]
     start_date: str
     end_date: str
     address: str
@@ -45,7 +27,6 @@ class CreateEventSchema(BaseModel):
 
 
 class EventCategoryOutSchema(BaseModel):
-    id: int
     name: str
 
     class Config:
@@ -53,7 +34,6 @@ class EventCategoryOutSchema(BaseModel):
 
 
 class EventScheduleOutSchema(BaseModel):
-    id: int
     start_date: date
     end_date: date
     description: str
@@ -62,8 +42,10 @@ class EventScheduleOutSchema(BaseModel):
         orm_mode = True
 
 
-class GetEventOutSchema(BaseModel):
+class EventOutSchema(BaseModel):
     """DTO to get event"""
+
+    id: int
 
     start_date: date
     end_date: date

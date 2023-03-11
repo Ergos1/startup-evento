@@ -13,7 +13,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.types import ARRAY
 
 from .database import Base
-from .types import Category, Role
+from .types import Role
 
 users_to_events_table = Table(
     "users_to_events",
@@ -70,6 +70,7 @@ class User(Base):
         secondary=users_to_events_table,
         back_populates="participants",
     )
+
     friends = relationship(
         "User",
         secondary=users_to_friends_table,
@@ -148,13 +149,19 @@ class Event(Base):
 
     # relations
     creator_id = Column(Integer, ForeignKey("users.id"))
-    creator = relationship("User", back_populates="created_events")
+    creator = relationship("User", back_populates="created_events", lazy="joined")
     participants = relationship(
-        "User", secondary=users_to_events_table, back_populates="participant_events"
+        "User",
+        secondary=users_to_events_table,
+        back_populates="participant_events",
+        lazy="select",
     )
-    schedules = relationship("EventSchedule")
-    comments = relationship("EventComment")
-    images = relationship("EventImage")
+    schedules = relationship("EventSchedule", lazy="select")
+    comments = relationship("EventComment", lazy="select")
+    images = relationship("EventImage", lazy="select")
     categories = relationship(
-        "EventCategory", secondary=events_to_events_categories_table, back_populates="events"
+        "EventCategory",
+        secondary=events_to_events_categories_table,
+        back_populates="events",
+        lazy="select",
     )

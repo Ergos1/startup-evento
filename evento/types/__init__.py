@@ -7,5 +7,5 @@ from .auth import (
 )
 from .base_pagination_filter import BasePaginationFilter
 from .constraints import Password
-from .event import Category, CreateEventSchema, GetEventOutSchema, SubscribeSchema
+from .event import CreateEventSchema, EventOutSchema, SubscribeSchema
 from .user import AddFriendSchema, Role, UserOutSchema
