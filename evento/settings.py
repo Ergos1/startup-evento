@@ -7,7 +7,11 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api"
     ALLOWED_HOST: list[str] = ["*"]
 
-    DATABASE_URL: PostgresDsn
+    POSTGRES_USER: str
+    POSTGRES_DB: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_HOSTNAME: str
+    POSTGRES_PORT: int
 
     FASTAPI_KWARGS = {
         "docs_url": f"{API_PREFIX}/docs",
@@ -21,9 +25,15 @@ class Settings(BaseSettings):
     OTP_API_URL: str
     OTP_API_KEY: str
 
+    @property
+    def DATABASE_URL(self):
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOSTNAME}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
     class Config:
         validate_assignment = True
         env_file = ".env"
+        env_file_encoding = "utf-8"
 
 
 settings = Settings()  # type: ignore
+print(settings.DATABASE_URL)
