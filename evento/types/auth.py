@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .constraints import Password, PhoneNumber, Username
 from .user import Role
@@ -8,16 +8,22 @@ class RegisterUserSchema(BaseModel):
     """DTO for register user"""
 
     username: Username  # unique
-    phone_number: PhoneNumber  # unique
+    phone_number: PhoneNumber = Field(alias="phoneNumber")
     password: Password
     role: Role
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class LoginUserSchema(BaseModel):
     """DTO for login user"""
 
-    phone_number: PhoneNumber
+    phone_number: PhoneNumber = Field(alias="phoneNumber")
     password: Password
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class TokenSchema(BaseModel):
@@ -29,11 +35,17 @@ class TokenSchema(BaseModel):
 class SendOTPSchema(BaseModel):
     """DTO for send otp"""
 
-    phone_number: PhoneNumber
+    phone_number: PhoneNumber = Field(alias="phoneNumber")
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class VerifyOTPSchema(BaseModel):
     """DTO for send otp"""
 
-    otp_code: str
-    phone_number: PhoneNumber
+    otp_code: str = Field(alias="otpCode")
+    phone_number: PhoneNumber = Field(alias="phoneNumber")
+
+    class Config:
+        allow_population_by_field_name = True

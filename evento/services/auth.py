@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
-from typing import cast
+from functools import wraps
+from inspect import iscoroutinefunction
+from typing import Callable, cast
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
@@ -22,30 +24,43 @@ from evento.types import (
     VerifyOTPSchema,
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 
-def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
-    """Dependecy to get user from auth token"""
-    payload = {}
+def auth_required(func: Callable):
+    @wraps(func)
+    async def wrapper(user: User, *args, **kwargs):
+        print(user)
+        if user == None:
+            raise HTTPException(401, "Authorization error")
+        if iscoroutinefunction(func):
+            return await func(*args, **kwargs, user=user)
+        return func(*args, **kwargs, user=user)
 
+    return wrapper
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> User | None:
+    """Dependecy to get user from auth token. If there is no auth_required ```returns -1``` otherwise ```raise Exception```"""
+    id = -1
     try:
         payload = jwt.decode(
             token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
         )
-        if payload.get("sub", None) is None:
-            raise Exception
+        id = payload.get("sub", id)
     except Exception as e:
-        print(e)
-        raise HTTPException(401, "Unauthorized")
-    
+        pass
+
+    if id == -1:
+        return None
 
     with session_scope() as db:
-        user = db.query(User).filter(User.id == payload.get('sub', -1)).one_or_none()
+        user = db.query(User).filter(User.id == id).one_or_none()
         if user is None:
             raise UserNotFoundException()
-        
-        return cast(int, user.id)
+
+        db.expunge(user)
+        return user
 
 
 def register_user(payload: RegisterUserSchema) -> UserOutSchema:

@@ -1,3 +1,6 @@
+from functools import reduce
+from typing import List
+
 from sqlalchemy import (
     TIMESTAMP,
     Boolean,
@@ -9,8 +12,8 @@ from sqlalchemy import (
     Table,
     text,
 )
+from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import ARRAY
 
 from .database import Base
 from .types import Role
@@ -165,3 +168,9 @@ class Event(Base):
         back_populates="events",
         lazy="select",
     )
+
+    # @hybrid_method
+    # def is_subscribed(self, user_id: int | Column[int]) -> bool:
+    #     user_ids: List[User] = [user.id for user in self.participants]
+
+    #     return user_id in user_ids
