@@ -8,3 +8,4 @@ from .auth import (
 )
 from .event import create_event, get_event, get_event_list, subscribe
 from .user import add_friend
+from .event_category import get_event_category_list

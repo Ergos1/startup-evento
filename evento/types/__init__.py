@@ -15,3 +15,4 @@ from .event import (
     SubscribeOutSchema,
 )
 from .user import AddFriendSchema, Role, UserOutSchema
+from .event_category import EventCategoryListSchema
