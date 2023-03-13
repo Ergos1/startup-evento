@@ -1,7 +1,7 @@
 from evento.database import session_scope
 from evento.execeptions import UserNotFoundException
-from evento.models import User
-from evento.types import AddFriendSchema, UserOutSchema
+from evento.models import LandingForm, User
+from evento.types import AddFriendSchema, FormInSchema, UserOutSchema
 
 
 def add_friend(payload: AddFriendSchema, current_user_id: int) -> UserOutSchema:
@@ -21,3 +21,12 @@ def add_friend(payload: AddFriendSchema, current_user_id: int) -> UserOutSchema:
         current_user.friends.append(friend)
 
         return UserOutSchema.from_orm(friend)
+
+
+def save_form(payload: FormInSchema) -> None:
+    """Add form otherwise raise exception"""
+
+    with session_scope() as db:
+        new_form = LandingForm(**payload.dict())
+
+        db.add(new_form)

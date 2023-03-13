@@ -174,3 +174,12 @@ class Event(Base):
     #     user_ids: List[User] = [user.id for user in self.participants]
 
     #     return user_id in user_ids
+
+
+class LandingForm(Base):
+    __tablename__ = "landing_forms"
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+
+    name = Column(String, nullable=False, unique=False)
+    email = Column(String, nullable=False, unique=False)
+    text_data = Column(String, nullable=False, unique=False)
