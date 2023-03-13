@@ -14,4 +14,5 @@ from .event import (
     SubscribeInSchema,
     SubscribeOutSchema,
 )
+from .event_category import EventCategoryListSchema
 from .user import AddFriendSchema, FormInSchema, Role, UserOutSchema
